@@ -4,54 +4,54 @@
     <meta charset="UTF-8">
     <title>CSA CTF - Restricted Portal</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #121212; color: #e0e0e0; text-align: center; padding: 100px; }
-        .box { border: 1px solid #444; padding: 40px; display: inline-block; background: #1e1e1e; border-radius: 8px; }
-        .status-red { color: #ff5555; font-weight: bold; }
-        .status-green { color: #50fa7b; font-weight: bold; }
+        body { font-family: 'Courier New', Courier, monospace; background: #1a1a1a; color: #00ff00; text-align: center; padding: 50px; }
+        .container { border: 2px solid #00ff00; padding: 20px; display: inline-block; border-radius: 10px; }
+        .status-red { color: #ff5555; }
+        .status-green { color: #50fa7b; }
     </style>
 </head>
 <body>
-
-    <div class="box">
-        <h2>Corporate Management Portal</h2>
-        <p>Current Role: <span id="role-text" class="status-red">Guest</span></p>
-        <div id="display-area">
-            <p>Error: Flag is encrypted. Only <b>admin</b> session tokens can decrypt the local buffer.</p>
+    <div class="container">
+        <h1>Member Portal</h1>
+        <p>User: <span id="user-display">Guest</span></p>
+        <p>Status: <strong id="status-display" class="status-red">Standard</strong></p>
+        <hr>
+        <div id="flag-zone">
+            <p>Access Denied: Admin session cookie required to decrypt local flag buffer.</p>
         </div>
     </div>
 
     <script>
-        // Setting the initial trap
+        // Set initial cookie if not present
         if (!document.cookie.includes("user_role=")) {
             document.cookie = "user_role=guest; path=/";
         }
-        const secretBuffer = "Q1NBe2Nvb2tpZXNfYXJlX25vdF9zZWN1cmV9";
-        function checkSession() {
+
+        // The flag is Base64 encoded: "CSA{cookies_are_not_secure}"
+        // This prevents "View Source" from revealing the flag immediately.
+        const encodedFlag = "Q1NBe2Nvb2tpZXNfYXJlX25vdF9zZWN1cmV9";
+
+        function checkAccess() {
             const cookies = document.cookie.split(';');
             let role = "guest";
 
             for (let c of cookies) {
                 let [name, value] = c.trim().split('=');
-                if (name === "user_role") {
-                    role = value;
-                }
+                if (name === "user_role") { role = value; }
             }
 
             if (role === "admin") {
-                document.getElementById('role-text').innerText = "Administrator";
-                document.getElementById('role-text').className = "status-green";
+                document.getElementById('user-display').innerText = "Administrator";
+                document.getElementById('status-display').innerText = "Full Access";
+                document.getElementById('status-display').className = "status-green";
                 
-                // Only decode and show if the cookie matches 'admin'
-                const decodedFlag = atob(secretBuffer);
-                document.getElementById('display-area').innerHTML = `
-                    <p style="color: #f1fa8c;">Authentication Successful!</p>
-                    <p>Flag: <code>${decodedFlag}</code></p>
-                `;
+                // Decode and render ONLY if role is admin
+                const flag = atob(encodedFlag); 
+                document.getElementById('flag-zone').innerHTML = `Access Granted: <b>${flag}</b>`;
             }
         }
 
-        // Run the check
-        window.onload = checkSession;
+        window.onload = checkAccess;
     </script>
 </body>
 </html>
