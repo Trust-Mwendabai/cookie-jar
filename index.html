@@ -2,59 +2,56 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CSA CTF - The Cookie Jar</title>
+    <title>CSA CTF - Restricted Portal</title>
     <style>
-        body { font-family: 'Courier New', Courier, monospace; background: #1a1a1a; color: #00ff00; text-align: center; padding: 50px; }
-        .container { border: 2px solid #00ff00; padding: 20px; display: inline-block; border-radius: 10px; }
-        .hidden { display: none; color: #ff00ea; font-weight: bold; font-size: 1.2em; }
-        .hint { color: #888; margin-top: 20px; font-style: italic; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #121212; color: #e0e0e0; text-align: center; padding: 100px; }
+        .box { border: 1px solid #444; padding: 40px; display: inline-block; background: #1e1e1e; border-radius: 8px; }
+        .status-red { color: #ff5555; font-weight: bold; }
+        .status-green { color: #50fa7b; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>Member Portal</h1>
-        <div id="content">
-            <p>Welcome, <span id="user-display">Guest</span>!</p>
-            <p>Status: <strong id="status-display">Standard User</strong></p>
-            <hr>
-            <div id="flag-zone">
-                <p>Access Denied: Only the <strong>admin</strong> can see the flag.</p>
-            </div>
+    <div class="box">
+        <h2>Corporate Management Portal</h2>
+        <p>Current Role: <span id="role-text" class="status-red">Guest</span></p>
+        <div id="display-area">
+            <p>Error: Flag is encrypted. Only <b>admin</b> session tokens can decrypt the local buffer.</p>
         </div>
     </div>
 
-    <p class="hint">Hint: Check how the server (or in this case, the script) knows who you are. Is it written down somewhere?</p>
-
     <script>
-        // Check if cookie exists, if not, set it to guest
+        // Setting the initial trap
         if (!document.cookie.includes("user_role=")) {
             document.cookie = "user_role=guest; path=/";
         }
-
-        function checkAccess() {
+        const secretBuffer = "Q1NBe2Nvb2tpZXNfYXJlX25vdF9zZWN1cmV9";
+        function checkSession() {
             const cookies = document.cookie.split(';');
-            let isAdmin = false;
+            let role = "guest";
 
-            for (let cookie of cookies) {
-                if (cookie.trim() === "user_role=admin") {
-                    isAdmin = true;
-                    break;
+            for (let c of cookies) {
+                let [name, value] = c.trim().split('=');
+                if (name === "user_role") {
+                    role = value;
                 }
             }
 
-            if (isAdmin) {
-                document.getElementById('user-display').innerText = "Administrator";
-                document.getElementById('status-display').innerText = "Full Access";
-                document.getElementById('flag-zone').innerHTML = 
-                    `<p>Access Granted! Here is your flag:</p>
-                     <p class="flag">CSA{cookies_are_not_secure}</p>`;
+            if (role === "admin") {
+                document.getElementById('role-text').innerText = "Administrator";
+                document.getElementById('role-text').className = "status-green";
+                
+                // Only decode and show if the cookie matches 'admin'
+                const decodedFlag = atob(secretBuffer);
+                document.getElementById('display-area').innerHTML = `
+                    <p style="color: #f1fa8c;">Authentication Successful!</p>
+                    <p>Flag: <code>${decodedFlag}</code></p>
+                `;
             }
         }
 
-        // Run check on load
-        window.onload = checkAccess;
+        // Run the check
+        window.onload = checkSession;
     </script>
 </body>
 </html>
